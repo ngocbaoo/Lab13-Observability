@@ -11,6 +11,7 @@ from structlog.contextvars import merge_contextvars
 from .pii import scrub_text
 
 LOG_PATH = Path(os.getenv("LOG_PATH", "data/logs.jsonl"))
+AUDIT_LOG_PATH = Path(os.getenv("AUDIT_LOG_PATH", "data/audit.jsonl"))
 
 
 class JsonlFileProcessor:
@@ -19,6 +20,11 @@ class JsonlFileProcessor:
         rendered = structlog.processors.JSONRenderer()(logger, method_name, event_dict)
         with LOG_PATH.open("a", encoding="utf-8") as f:
             f.write(rendered + "\n")
+            
+        if event_dict.get("audit"):
+            AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+            with AUDIT_LOG_PATH.open("a", encoding="utf-8") as f:
+                f.write(rendered + "\n")
         return event_dict
 
 

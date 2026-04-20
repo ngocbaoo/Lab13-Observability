@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
-from dotenv import load_dotenv
+from pathlib import Path
 
+from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
 from structlog.contextvars import bind_contextvars
 
 from .agent import LabAgent
@@ -21,7 +23,10 @@ from .tracing import tracing_enabled
 configure_logging()
 log = get_logger()
 app = FastAPI(title="Day 13 Observability Lab")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(CorrelationIdMiddleware)
+
+DASHBOARD_PATH = Path(__file__).resolve().parent / "dashboard.html"
 agent = LabAgent()
 
 
@@ -45,6 +50,12 @@ async def metrics() -> dict:
     return snapshot()
 
 
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard() -> HTMLResponse:
+    html = DASHBOARD_PATH.read_text(encoding="utf-8")
+    return HTMLResponse(content=html)
+
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: Request, body: ChatRequest) -> ChatResponse:
     # Enrich logs with request context (user_id_hash, session_id, feature, model, env)
@@ -60,6 +71,7 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponse:
         "request_received",
         service="api",
         payload={"message_preview": summarize_text(body.message)},
+        audit=True,
     )
     try:
         result = agent.run(

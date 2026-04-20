@@ -25,24 +25,30 @@ class LabAgent:
         self.model = model
         self.llm = FakeLLM(model=model)
 
-    @observe()
+    @observe(name="movie-recommendation-agent", capture_input=False, capture_output=False)
     def run(self, user_id: str, feature: str, session_id: str, message: str) -> AgentResult:
+        langfuse_context.update_current_observation(input=message)
         started = time.perf_counter()
         docs = retrieve(message)
         prompt = f"Feature={feature}\nDocs={docs}\nQuestion={message}"
         response = self.llm.generate(prompt)
         quality_score = self._heuristic_quality(message, response.text, docs)
         latency_ms = int((time.perf_counter() - started) * 1000)
-        cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
+        cost_usd = self._estimate_cost(
+            response.usage.input_tokens, 
+            response.usage.output_tokens, 
+            response.usage.cache_read_tokens
+        )
 
         langfuse_context.update_current_trace(
+            name=f"chat-{feature}",
             user_id=hash_user_id(user_id),
             session_id=session_id,
             tags=["lab", feature, self.model],
         )
         langfuse_context.update_current_observation(
             metadata={"doc_count": len(docs), "query_preview": summarize_text(message)},
-            usage_details={"input": response.usage.input_tokens, "output": response.usage.output_tokens},
+            output=response.text,
         )
 
         metrics.record_request(
@@ -53,6 +59,7 @@ class LabAgent:
             quality_score=quality_score,
         )
 
+        langfuse_context.flush()
         return AgentResult(
             answer=response.text,
             latency_ms=latency_ms,
@@ -62,10 +69,11 @@ class LabAgent:
             quality_score=quality_score,
         )
 
-    def _estimate_cost(self, tokens_in: int, tokens_out: int) -> float:
+    def _estimate_cost(self, tokens_in: int, tokens_out: int, cache_read_tokens: int = 0) -> float:
         input_cost = (tokens_in / 1_000_000) * 3
+        cache_cost = (cache_read_tokens / 1_000_000) * 0.3  # Anthropic prompt caching hits cost 10%
         output_cost = (tokens_out / 1_000_000) * 15
-        return round(input_cost + output_cost, 6)
+        return round(input_cost + cache_cost + output_cost, 6)
 
     def _heuristic_quality(self, question: str, answer: str, docs: list[str]) -> float:
         score = 0.5

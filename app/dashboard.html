@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎬 Movie Chatbot — Observability Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --surface: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.08);
+      --accent: #6366f1;
+      --accent2: #22d3ee;
+      --accent3: #f59e0b;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(34,211,238,0.1) 0%, transparent 50%);
+    }
+
+    /* Header */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 28px; border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 50;
+      background: rgba(10,15,30,0.85);
+    }
+    .header-left h1 { font-size: 1.35rem; font-weight: 800; }
+    .header-left h1 span { background: linear-gradient(90deg,#6366f1,#22d3ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .header-left p { color: var(--muted); font-size: 0.75rem; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .status-text { font-size: 0.75rem; color: var(--muted); }
+    .btn {
+      padding: 7px 14px; border-radius: 8px; border: none;
+      font-family: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-langfuse {
+      background: linear-gradient(135deg,#6366f1,#8b5cf6); color: white;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-langfuse:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+    .btn-refresh { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .btn-refresh:hover { background: rgba(255,255,255,0.1); }
+
+    /* Summary Cards */
+    .summary-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px; padding: 20px 28px;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px; backdrop-filter: blur(12px);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .card-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 6px; }
+    .card-value { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+    .card-unit { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+    .card-slo { font-size: 0.68rem; margin-top: 5px; padding: 2px 8px; border-radius: 20px; display: inline-block; }
+    .slo-ok { background: rgba(16,185,129,0.15); color: var(--green); }
+    .slo-breach { background: rgba(239,68,68,0.15); color: var(--red); }
+    .v-traffic { color: var(--accent2); }
+    .v-latency { color: var(--accent); }
+    .v-cost { color: var(--accent3); }
+    .v-quality { color: var(--green); }
+    .v-error { color: var(--red); }
+    .v-tokens { color: #e879f9; }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 18px; padding: 0 28px 28px;
+    }
+    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; backdrop-filter: blur(12px);
+    }
+    .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .chart-title { font-size: 0.85rem; font-weight: 700; }
+    .chart-subtitle { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .chart-badge { font-size: 0.65rem; padding: 3px 9px; border-radius: 20px; background: rgba(99,102,241,0.15); color: var(--accent); }
+    .chart-wrap { position: relative; height: 190px; }
+
+    /* Error table */
+    .error-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 6px; }
+    .error-table th { text-align: left; padding: 7px 10px; color: var(--muted); font-weight: 600; font-size: 0.68rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .error-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .error-empty { color: var(--muted); text-align: center; padding: 20px; font-size: 0.8rem; }
+
+    footer { text-align: center; padding: 14px; color: var(--muted); font-size: 0.7rem; border-top: 1px solid var(--border); }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>🎬 <span>Movie Chatbot</span> — Observability</h1>
+    <p>Day 13 Lab · Auto-refresh 30s · SLO baselines visible</p>
+  </div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <span class="status-text">Live · <span id="countdown">30</span>s</span>
+    <button class="btn btn-refresh" onclick="fetchAndRender()">↺ Refresh</button>
+    <a class="btn btn-langfuse" href="https://cloud.langfuse.com" target="_blank">↗ Langfuse</a>
+  </div>
+</header>
+
+<div class="summary-row">
+  <div class="card"><div class="card-label">📶 Traffic</div><div class="card-value v-traffic" id="s-traffic">—</div><div class="card-unit">total requests</div></div>
+  <div class="card"><div class="card-label">⏱ Latency P95</div><div class="card-value v-latency" id="s-p95">—</div><div class="card-unit">milliseconds</div><span class="card-slo" id="slo-latency">SLO ≤ 5000ms</span></div>
+  <div class="card"><div class="card-label">❌ Errors</div><div class="card-value v-error" id="s-errors">—</div><div class="card-unit">total errors</div><span class="card-slo" id="slo-error">SLO ≤ 5%</span></div>
+  <div class="card"><div class="card-label">💰 Total Cost</div><div class="card-value v-cost" id="s-cost">—</div><div class="card-unit">USD</div></div>
+  <div class="card"><div class="card-label">🪙 Tokens Out</div><div class="card-value v-tokens" id="s-tokens-out">—</div><div class="card-unit">output tokens</div></div>
+  <div class="card"><div class="card-label">⭐ Quality</div><div class="card-value v-quality" id="s-quality">—</div><div class="card-unit">score (0–1)</div><span class="card-slo" id="slo-quality">SLO ≥ 0.7</span></div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-header"><div><div class="chart-title">📶 Panel 1 — Traffic</div><div class="chart-subtitle">Cumulative requests over time</div></div><span class="chart-badge">QPS</span></div>
+    <div class="chart-wrap"><canvas id="chartTraffic"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-header"><div><div class="chart-title">⏱ Panel 2 — Latency P50/P95/P99</div><div class="chart-subtitle">Response time · SLO = 5000ms</div></div><span class="chart-badge">ms</span></div>
+    <div class="chart-wrap"><canvas id="chartLatency"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-header"><div><div class="chart-title">❌ Panel 3 — Error Breakdown</div><div class="chart-subtitle">Errors grouped by type</div></div><span class="chart-badge">Errors</span></div>
+    <table class="error-table"><thead><tr><th>Error Type</th><th>Count</th><th>Share</th></tr></thead><tbody id="errorTableBody"></tbody></table>
+    <p class="error-empty" id="errorEmpty">✅ No errors recorded yet</p>
+  </div>
+  <div class="chart-card">
+    <div class="chart-header"><div><div class="chart-title">💰 Panel 4 — Cost Over Time</div><div class="chart-subtitle">Avg cost per request (mUSD)</div></div><span class="chart-badge">USD</span></div>
+    <div class="chart-wrap"><canvas id="chartCost"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-header"><div><div class="chart-title">🪙 Panel 5 — Tokens In / Out</div><div class="chart-subtitle">Cumulative token usage</div></div><span class="chart-badge">Tokens</span></div>
+    <div class="chart-wrap"><canvas id="chartTokens"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-header"><div><div class="chart-title">⭐ Panel 6 — Quality Score</div><div class="chart-subtitle">Heuristic proxy · SLO ≥ 0.7</div></div><span class="chart-badge">Score</span></div>
+    <div class="chart-wrap"><canvas id="chartQuality"></canvas></div>
+  </div>
+</div>
+
+<footer>Day 13 Observability Lab · Data: <code>/metrics</code> · Traces: <a href="https://cloud.langfuse.com" target="_blank">cloud.langfuse.com</a></footer>
+
+<script>
+const C = { indigo:'#6366f1', cyan:'#22d3ee', amber:'#f59e0b', green:'#10b981', red:'#ef4444', purple:'#e879f9', slo:'rgba(239,68,68,0.55)', grid:'rgba(255,255,255,0.06)' };
+const MAX = 20;
+const H = { labels:[], traffic:[], p50:[], p95:[], p99:[], cost:[], tokIn:[], tokOut:[], quality:[] };
+
+function push(arr,v){ arr.push(v); if(arr.length>MAX) arr.shift(); }
+function pushH(d){
+  const t=new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  push(H.labels,t); push(H.traffic,d.traffic); push(H.p50,d.latency_p50); push(H.p95,d.latency_p95);
+  push(H.p99,d.latency_p99); push(H.cost,+(d.avg_cost_usd*1000).toFixed(4));
+  push(H.tokIn,d.tokens_in_total); push(H.tokOut,d.tokens_out_total); push(H.quality,d.quality_avg);
+}
+
+const dOpts = { responsive:true, maintainAspectRatio:false, animation:{duration:400},
+  plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+  scales:{ x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:C.grid}}, y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:C.grid}} }
+};
+const sloPlugin = (sloY) => ({ id:'slo'+Math.random(), beforeDraw(chart){
+  if(!sloY) return;
+  const{ctx:c,chartArea:{left,right},scales:{y}}=chart; const yPx=y.getPixelForValue(sloY);
+  c.save(); c.setLineDash([6,4]); c.strokeStyle=C.slo; c.lineWidth=1.5;
+  c.beginPath(); c.moveTo(left,yPx); c.lineTo(right,yPx); c.stroke(); c.restore();
+}});
+function ds(label,data,color,fill=false){ return { label,data:[...data],borderColor:color,
+  backgroundColor:fill?color.replace(')',',0.12)').replace('rgb','rgba'):'transparent',
+  tension:0.4, pointRadius:3, pointHoverRadius:5, fill, borderWidth:2 }; }
+function mkLine(id,datasets,yMax,sloY){ return new Chart(document.getElementById(id).getContext('2d'),{
+  type:'line', data:{labels:H.labels,datasets}, options:{...dOpts,scales:{...dOpts.scales,y:{...dOpts.scales.y,max:yMax||undefined}}},
+  plugins:[sloPlugin(sloY)]
+}); }
+function updateC(c,dsets){ c.data.labels=[...H.labels]; dsets.forEach((d,i)=>{c.data.datasets[i].data=[...d];}); c.update(); }
+
+let charts={};
+function init(){
+  charts.traffic = mkLine('chartTraffic',[ds('Requests',H.traffic,C.cyan,true)]);
+  charts.latency = mkLine('chartLatency',[ds('P50',H.p50,C.green),ds('P95',H.p95,C.amber),ds('P99',H.p99,C.red)],null,5000);
+  charts.cost    = mkLine('chartCost',[ds('Avg Cost (m$)',H.cost,C.amber,true)]);
+  charts.tokens  = mkLine('chartTokens',[ds('In',H.tokIn,C.indigo),ds('Out',H.tokOut,C.purple)]);
+  charts.quality = mkLine('chartQuality',[ds('Quality',H.quality,C.green,true)],1.0,0.7);
+}
+
+function setSLO(id,ok,text){ const el=document.getElementById(id); el.textContent=text; el.className='card-slo '+(ok?'slo-ok':'slo-breach'); }
+
+async function fetchAndRender(){
+  try{
+    const r=await fetch('/metrics'); if(!r.ok) throw new Error(r.statusText);
+    const d=await r.json(); pushH(d);
+    document.getElementById('s-traffic').textContent=d.traffic;
+    document.getElementById('s-p95').textContent=d.latency_p95+' ms';
+    const errT=Object.values(d.error_breakdown).reduce((a,b)=>a+b,0);
+    document.getElementById('s-errors').textContent=errT;
+    document.getElementById('s-cost').textContent='$'+d.total_cost_usd.toFixed(4);
+    document.getElementById('s-tokens-out').textContent=d.tokens_out_total.toLocaleString();
+    document.getElementById('s-quality').textContent=d.quality_avg.toFixed(2);
+    setSLO('slo-latency',d.latency_p95<=5000,'P95='+d.latency_p95+'ms · SLO≤5000');
+    const errP=d.traffic>0?((errT/d.traffic)*100).toFixed(1):0;
+    setSLO('slo-error',errP<=5,'Err='+errP+'% · SLO≤5%');
+    setSLO('slo-quality',d.quality_avg>=0.7,'Avg='+d.quality_avg.toFixed(2)+' · SLO≥0.70');
+    const tb=document.getElementById('errorTableBody'),em=document.getElementById('errorEmpty');
+    const entries=Object.entries(d.error_breakdown);
+    if(entries.length>0){ tb.innerHTML=entries.map(([t,c])=>`<tr><td>${t}</td><td style="color:var(--red);font-weight:700">${c}</td><td style="color:var(--muted)">${d.traffic>0?((c/d.traffic)*100).toFixed(1)+'%':'—'}</td></tr>`).join(''); em.style.display='none'; }
+    else{ tb.innerHTML=''; em.style.display='block'; }
+    updateC(charts.traffic,[H.traffic]); updateC(charts.latency,[H.p50,H.p95,H.p99]);
+    updateC(charts.cost,[H.cost]); updateC(charts.tokens,[H.tokIn,H.tokOut]); updateC(charts.quality,[H.quality]);
+  } catch(e){ console.error('Fetch failed:',e); }
+}
+
+let cd=30;
+function tick(){ cd--; document.getElementById('countdown').textContent=cd; if(cd<=0){cd=30;fetchAndRender();} }
+
+init(); fetchAndRender(); setInterval(tick,1000);
+</script>
+</body>
+</html>
