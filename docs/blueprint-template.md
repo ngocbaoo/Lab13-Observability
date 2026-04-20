@@ -65,7 +65,7 @@
 
 ### [Lê Minh Hoàng]
 - [TASKS_COMPLETED]: Enhanced app middleware and implemented Correlation ID mechanism. Added request scope log enrichment bindings.
-- [EVIDENCE_LINK]: commit `abc1234`
+- [EVIDENCE_LINK]: commit `152d9c66077bd2f864ff1c044a40eba6f4035f8b`
 
 ### [Nguyễn Xuân Hải]
 - [TASKS_COMPLETED]: Configured `slo.yaml` and implemented alert rules for SLO breaches.
