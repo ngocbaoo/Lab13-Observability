@@ -26,7 +26,7 @@ app = FastAPI(title="Day 13 Observability Lab")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.add_middleware(CorrelationIdMiddleware)
 
-DASHBOARD_PATH = Path(__file__).resolve().parent.parent / "docs" / "dashboard.html"
+DASHBOARD_PATH = Path(__file__).resolve().parent / "dashboard.html"
 agent = LabAgent()
 
 
