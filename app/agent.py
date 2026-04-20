@@ -4,10 +4,13 @@ import time
 from dataclasses import dataclass
 
 from . import metrics
+from .logging_config import get_logger
 from .mock_llm import FakeLLM
 from .mock_rag import retrieve
 from .pii import hash_user_id, summarize_text
-from .tracing import langfuse_context, observe
+from .tracing import current_trace_info, langfuse_context, observe, tracing_enabled
+
+log = get_logger()
 
 
 @dataclass
@@ -60,6 +63,8 @@ class LabAgent:
         )
 
         langfuse_context.flush()
+        if tracing_enabled():
+            log.info("trace_flushed", service="tracing", payload=current_trace_info())
         return AgentResult(
             answer=response.text,
             latency_ms=latency_ms,

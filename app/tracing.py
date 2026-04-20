@@ -36,11 +36,43 @@ except Exception as e:  # pragma: no cover
                 _client.update_current_trace(**kwargs)
 
             def update_current_observation(self, **kwargs: Any) -> None:
-                # In older SDKs, "observation" maps to the current span.
-                _client.update_current_span(**kwargs)
+                # In older SDKs, "observation" maps to the current span and the accepted
+                # parameter set is smaller than in newer decorator-based integration.
+                allowed = {"name", "input", "output", "metadata", "version", "level", "status_message"}
+                safe_kwargs: dict[str, Any] = {}
+                metadata: dict[str, Any] = {}
+
+                # Keep explicit metadata if provided.
+                if isinstance(kwargs.get("metadata"), dict):
+                    metadata.update(kwargs["metadata"])
+
+                # Map common extra fields to metadata.
+                if "model" in kwargs:
+                    metadata.setdefault("model", kwargs["model"])
+                if "usage" in kwargs:
+                    metadata.setdefault("usage", kwargs["usage"])
+
+                # Pass through allowed fields.
+                for k, v in kwargs.items():
+                    if k in allowed and k != "metadata":
+                        safe_kwargs[k] = v
+                    elif k not in allowed and k not in {"model", "usage"}:
+                        # Preserve any unexpected keys without breaking the SDK.
+                        metadata.setdefault(k, v)
+
+                if metadata:
+                    safe_kwargs["metadata"] = metadata
+
+                _client.update_current_span(**safe_kwargs)
 
             def flush(self) -> None:
                 _client.flush()
+
+            def get_current_trace_id(self) -> str | None:
+                return _client.get_current_trace_id()
+
+            def get_current_trace_url(self) -> str | None:
+                return _client.get_trace_url()
 
         langfuse_context = _ClientContext()
 
@@ -94,6 +126,12 @@ except Exception as e:  # pragma: no cover
             def flush(self) -> None:
                 return None
 
+            def get_current_trace_id(self) -> str | None:
+                return None
+
+            def get_current_trace_url(self) -> str | None:
+                return None
+
         langfuse_context = _DummyContext()
 
 
@@ -127,3 +165,11 @@ def tracing_diagnostics() -> dict[str, Any]:
         "public_key_set": public_key_set,
         "secret_key_set": secret_key_set,
     }
+
+
+def current_trace_info() -> dict[str, str | None]:
+    get_id = getattr(langfuse_context, "get_current_trace_id", None)
+    get_url = getattr(langfuse_context, "get_current_trace_url", None)
+    trace_id = get_id() if callable(get_id) else None
+    trace_url = get_url() if callable(get_url) else None
+    return {"trace_id": trace_id, "trace_url": trace_url}
