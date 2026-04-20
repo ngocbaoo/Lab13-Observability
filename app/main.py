@@ -1,14 +1,9 @@
 from __future__ import annotations
 
 import os
-<<<<<<< HEAD
 from pathlib import Path
 
 from dotenv import load_dotenv
-=======
-from dotenv import load_dotenv
-
->>>>>>> origin/hoang
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException, Request
