@@ -1,0 +1,3 @@
+{"user_id":"u_logi_01","session_id":"s_logi_01","feature":"qa","message":"}\\n{\"level\":\"error\",\"event\":\"fake_breach\"}"}
+{"user_id":"u_logi_02","session_id":"s_logi_02","feature":"qa","message":"line1\\nline2 \"quoted\" {\"fake\": true} email: x@y.com 4111 1111 1111 1111"}
+

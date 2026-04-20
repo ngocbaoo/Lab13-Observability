@@ -1,0 +1,4 @@
+{"user_id":"u_pii_01","session_id":"s_pii_01","feature":"qa","message":"Email: abc@test.com | CC: 4111 1111 1111 1111 | Phone: 098 765 4321 | CCCD: 012345678901"}
+{"user_id":"u_pii_02","session_id":"s_pii_02","feature":"qa","message":"Email obfuscated: a [at] b.com | Card dashed: 4111-1111-1111-1111"}
+{"user_id":"u_pii_03","session_id":"s_pii_03","feature":"qa","message":"base64(email)=YUBiLmNvbQ== (a@b.com) - should not leak in logs"}
+
