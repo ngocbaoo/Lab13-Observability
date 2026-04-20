@@ -18,6 +18,11 @@ except Exception:  # pragma: no cover
         def update_current_observation(self, **kwargs: Any) -> None:
             return None
 
+        # Some code paths call `langfuse_context.flush()` to ensure traces are sent.
+        # When Langfuse isn't installed/configured, this is a no-op.
+        def flush(self) -> None:
+            return None
+
     langfuse_context = _DummyContext()
 
 

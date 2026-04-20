@@ -111,3 +111,12 @@ Your final grade is calculated as follows:
 - All `TODO` blocks must be completed.
 - Minimum of 10 traces must be visible in Langfuse.
 - Dashboard must show all 6 required panels.
+
+
+python scripts/validate_logs.py
+python -c 'import json, pathlib; p=pathlib.Path("data/logs.jsonl"); bad=0
+for l in p.read_text(encoding="utf-8").splitlines():
+  if not l.strip(): continue
+  try: json.loads(l)
+  except Exception: bad+=1
+print("bad_lines=",bad)'
