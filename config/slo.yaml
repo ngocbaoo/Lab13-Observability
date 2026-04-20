@@ -3,14 +3,17 @@ window: 28d
 slis:
   latency_p95_ms:
     objective: 3000
-    target: 99.5
-    note: Replace with your group's target
+    target: 99.0
+    description: 99.0% of requests should keep p95 latency under 3000ms in 28d.
   error_rate_pct:
     objective: 2
-    target: 99.0
+    target: 99.5
+    description: 99.5% of requests should complete without server-side failure.
   daily_cost_usd:
-    objective: 2.5
-    target: 100.0
-  quality_score_avg:
-    objective: 0.75
+    objective: 2.0
     target: 95.0
+    description: 95% of days should stay within 2.0 USD per day operating budget.
+  quality_score_avg:
+    objective: 0.8
+    target: 95.0
+    description: 95% of periods should keep average quality score at or above 0.80.

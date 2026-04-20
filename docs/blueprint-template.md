@@ -35,11 +35,16 @@
 |---|---:|---|---:|
 | Latency P95 | < 3000ms | 28d | 2400ms |
 | Error Rate | < 2% | 28d | 0.5% |
-| Cost Budget | < $2.5/day | 1d | $1.20 |
+| Cost Budget | < $2.0/day | 28d | $1.20 |
+| Quality Score Avg | >= 0.80 | 28d | 0.86 |
 
 ### 3.3 Alerts & Runbook
 - [ALERT_RULES_SCREENSHOT]: docs/images/alerts.png
 - [SAMPLE_RUNBOOK_LINK]: [docs/alerts.md#1-high-latency-p95](docs/alerts.md#1-high-latency-p95)
+- [ALERT_SUMMARY]:
+  1) `high_latency_p95`: latency_p95_ms > 3000 for 10m (P2)
+  2) `high_error_rate`: error_rate_pct > 2 for 5m (P1)
+  3) `cost_budget_spike`: avg_cost_usd > 0.08 for 15m (P2)
 
 ---
 
