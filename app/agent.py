@@ -34,7 +34,11 @@ class LabAgent:
         response = self.llm.generate(prompt)
         quality_score = self._heuristic_quality(message, response.text, docs)
         latency_ms = int((time.perf_counter() - started) * 1000)
-        cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
+        cost_usd = self._estimate_cost(
+            response.usage.input_tokens, 
+            response.usage.output_tokens, 
+            response.usage.cache_read_tokens
+        )
 
         langfuse_context.update_current_trace(
             name=f"chat-{feature}",
@@ -65,10 +69,11 @@ class LabAgent:
             quality_score=quality_score,
         )
 
-    def _estimate_cost(self, tokens_in: int, tokens_out: int) -> float:
+    def _estimate_cost(self, tokens_in: int, tokens_out: int, cache_read_tokens: int = 0) -> float:
         input_cost = (tokens_in / 1_000_000) * 3
+        cache_cost = (cache_read_tokens / 1_000_000) * 0.3  # Anthropic prompt caching hits cost 10%
         output_cost = (tokens_out / 1_000_000) * 15
-        return round(input_cost + output_cost, 6)
+        return round(input_cost + cache_cost + output_cost, 6)
 
     def _heuristic_quality(self, question: str, answer: str, docs: list[str]) -> float:
         score = 0.5

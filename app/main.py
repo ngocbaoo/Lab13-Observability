@@ -71,6 +71,7 @@ async def chat(request: Request, body: ChatRequest) -> ChatResponse:
         "request_received",
         service="api",
         payload={"message_preview": summarize_text(body.message)},
+        audit=True,
     )
     try:
         result = agent.run(
