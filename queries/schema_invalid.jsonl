@@ -1,0 +1,4 @@
+{"user_id":"u_bad_01","feature":"qa"}
+{"user_id":"u_bad_02","session_id":"s_bad_02","feature":"qa","message":""}
+{"user_id":123,"session_id":false,"feature":null,"message":["hi"]}
+
