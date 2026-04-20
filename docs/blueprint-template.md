@@ -3,13 +3,13 @@
 > **Instruction**: Fill in all sections below. This report is designed to be parsed by an automated grading assistant. Ensure all tags (e.g., `[GROUP_NAME]`) are preserved.
 
 ## 1. Team Metadata
-- [GROUP_NAME]: 
-- [REPO_URL]: 
+- [GROUP_NAME]: D1
+- [REPO_URL]: https://github.com/ngocbaoo/Lab13-Observability
 - [MEMBERS]:
-  - Member A: [Name] | Role: Logging & PII
-  - Member B: [Name] | Role: Tracing & Enrichment
-  - Member C: [Name] | Role: SLO & Alerts
-  - Member D: [Name] | Role: Load Test & Dashboard
+  - Member A: [Tạ Bảo Ngọc] | Role: Logging & PII
+  - Member B: [Lê Minh Hoàng] | Role: Tracing & Enrichment
+  - Member C: [Nguyễn Xuân Hải] | Role: SLO & Alerts
+  - Member D: [Thái Minh Kiên] | Role: Load Test & Dashboard
   - Member E: [Name] | Role: Demo & Report
 
 ---
