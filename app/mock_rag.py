@@ -23,7 +23,11 @@ CORPUS = {
 }
 
 
+from .tracing import langfuse_context, observe
+
+@observe(name="vector-search", capture_input=False)
 def retrieve(message: str) -> list[str]:
+    langfuse_context.update_current_observation(input=message)
     if STATE["tool_fail"]:
         raise RuntimeError("Vector store timeout")
     if STATE["rag_slow"]:
@@ -32,10 +36,12 @@ def retrieve(message: str) -> list[str]:
     
     # Keyword mapping for Vietnamese
     if "hành động" in lowered or "action" in lowered:
-        return CORPUS["action"]
-    if "hài" in lowered or "comedy" in lowered:
-        return CORPUS["comedy"]
-    if "khoa học viễn tưởng" in lowered or "sci-fi" in lowered:
-        return CORPUS["sci-fi"]
+        result = CORPUS["action"]
+    elif "hài" in lowered or "comedy" in lowered:
+        result = CORPUS["comedy"]
+    elif "khoa học viễn tưởng" in lowered or "sci-fi" in lowered:
+        result = CORPUS["sci-fi"]
+    else:
+        result = ["No domain document matched. Use general fallback answer."]
         
-    return ["No domain document matched. Use general fallback answer."]
+    return result

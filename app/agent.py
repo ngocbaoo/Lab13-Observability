@@ -25,8 +25,9 @@ class LabAgent:
         self.model = model
         self.llm = FakeLLM(model=model)
 
-    @observe()
+    @observe(name="movie-recommendation-agent", capture_input=False, capture_output=False)
     def run(self, user_id: str, feature: str, session_id: str, message: str) -> AgentResult:
+        langfuse_context.update_current_observation(input=message)
         started = time.perf_counter()
         docs = retrieve(message)
         prompt = f"Feature={feature}\nDocs={docs}\nQuestion={message}"
@@ -36,13 +37,14 @@ class LabAgent:
         cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
 
         langfuse_context.update_current_trace(
+            name=f"chat-{feature}",
             user_id=hash_user_id(user_id),
             session_id=session_id,
             tags=["lab", feature, self.model],
         )
         langfuse_context.update_current_observation(
             metadata={"doc_count": len(docs), "query_preview": summarize_text(message)},
-            usage_details={"input": response.usage.input_tokens, "output": response.usage.output_tokens},
+            output=response.text,
         )
 
         metrics.record_request(
@@ -53,6 +55,7 @@ class LabAgent:
             quality_score=quality_score,
         )
 
+        langfuse_context.flush()
         return AgentResult(
             answer=response.text,
             latency_ms=latency_ms,
