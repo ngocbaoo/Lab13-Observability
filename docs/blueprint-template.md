@@ -6,10 +6,10 @@
 - [GROUP_NAME]: D1
 - [REPO_URL]: https://github.com/ngocbaoo/Lab13-Observability
 - [MEMBERS]:
-  - Member A: [Tạ Bảo Ngọc] | Role: Logging & PII
-  - Member B: [Lê Minh Hoàng] | Role: Tracing & Enrichment, Report
-  - Member C: [Nguyễn Xuân Hải] | Role: SLO & Alerts
-  - Member D: [Thái Minh Kiên] | Role: Load Test & Dashboard
+  - Member A: [Tạ Bảo Ngọc] | Role: Project Setup, Logging & PII
+  - Member B: [Thái Minh Kiên] | Role: Tracing & Observability Context
+  - Member C: [Nguyễn Xuân Hải] | Role: Load Test, Automations & Documentation
+  - Member D: [Lê Minh Hoàng] | Role: SLO, Alerts & System Optimization
 
 ---
 
@@ -60,28 +60,23 @@
 ## 5. Individual Contributions & Evidence
 
 ### [Tạ Bảo Ngọc]
-- [TASKS_COMPLETED]: Implemented Data Sanitization and PII Scrubber in `app/logging_config.py`.
-- [EVIDENCE_LINK]: commit `def456`
-
-### [Lê Minh Hoàng]
-- [TASKS_COMPLETED]: Enhanced app middleware and implemented Correlation ID mechanism. Added request scope log enrichment bindings.
-- [EVIDENCE_LINK]: commit `152d9c66077bd2f864ff1c044a40eba6f4035f8b`
-
-### [Nguyễn Xuân Hải]
-- [TASKS_COMPLETED]: Configured `slo.yaml` and implemented alert rules for SLO breaches.
-- [EVIDENCE_LINK]: commit `xyz789`
+- [TASKS_COMPLETED]: Khởi tạo toàn bộ cấu trúc dự án (app, config, docs, scripts, tests). Chịu trách nhiệm thiết lập nền tảng Logging cơ bản, dữ liệu sample queries và hệ thống đáp án kỳ vọng.
+- [EVIDENCE_LINK]: commit `9558fa92e58259e93241095b1591d33af99b71a9` và `8c63e7073df4c3ef1fcaafc0ea9e219ecc97de7a`
 
 ### [Thái Minh Kiên]
-- [TASKS_COMPLETED]: Orchestrated Load Testing scripts and compiled Prometheus metrics into a 6-panel Grafana Dashboard.
-- [EVIDENCE_LINK]: commit `fbg101`
+- [TASKS_COMPLETED]: Triển khai hệ thống Tracing cơ bản. Thêm cơ chế kiểm tra `_LANGFUSE_AVAILABLE`, tạo lớp `_LangfuseContext` để quản lý `update_current_trace`, tracking usage details và flushing dữ liệu trace an toàn.
+- [EVIDENCE_LINK]: commit `6bd270381214da3bfeef045d486c23ff78c9171a`
 
-### [Trần Văn E]
-- [TASKS_COMPLETED]: Finalized reporting, recorded the demonstration video and drafted the `blueprint-template.md`.
-- [EVIDENCE_LINK]: commit `rty679` 
+### [Nguyễn Xuân Hải]
+- [TASKS_COMPLETED]: Xây dựng các kịch bản chạy test truy vấn tự động (`scripts/run_queries.py`). Chuẩn bị bộ truy vấn mới, sửa lỗi tiến trình flush tracing và cập nhật tài liệu chạy ứng dụng (`tester.md`).
+- [EVIDENCE_LINK]: commit `d29812ec0f5b3396438584c2ba0dbc8ac706ad73` và `2d86d889b2641519c73d1e2be784f68ac48b024e`
+
+### [Lê Minh Hoàng]
+- [TASKS_COMPLETED]: Thiết lập các quy tắc Alert và khai báo SLO (`alert_rules.yaml`, `slo.yaml`, `alerts.md`). Refactor tối ưu hệ thống: loại bỏ API thừa, tinh gọn tracing agent và tối ưu hóa hệ thống mock (LLM, RAG).
+- [EVIDENCE_LINK]: commit `152d9c66077bd2f864ff1c044a40eba6f4035f8b`
 
 ---
 
 ## 6. Bonus Items (Optional)
-- [BONUS_COST_OPTIMIZATION]: Implemented caching for frequent identical prompts, reducing LLM API calls and dropping daily token costs by ~15%.
-- [BONUS_AUDIT_LOGS]: Configured a separate structlog file sink (`data/audit.jsonl`) for tracking user activity related to potential security alerts.
-- [BONUS_CUSTOM_METRIC]: Added a custom prometheus metric `cache_hit_rate` to observe efficiency of the newly added caching mechanism.
+- [BONUS_SYSTEM_OPTIMIZATION]: Đã thực hiện code-refactor tinh gọn ứng dụng, loại bỏ các file và logic không cần thiết, tối giản kiến trúc để focus toàn bộ sức mạnh vào Core Observability.
+- [BONUS_RESILIENT_TRACING]: Phát triển cơ sở Tracing ổn định qua việc cấu hình fallback (ngăn ứng dụng crash khi gọi thiếu Langfuse API key) và tối ưu tiến trình flush.

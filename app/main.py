@@ -4,7 +4,9 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-load_dotenv()
+_ROOT_ENV = Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(dotenv_path=_ROOT_ENV, override=False)
+load_dotenv(override=False)
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,7 +20,7 @@ from .metrics import record_error, snapshot
 from .middleware import CorrelationIdMiddleware
 from .pii import hash_user_id, summarize_text
 from .schemas import ChatRequest, ChatResponse
-from .tracing import tracing_enabled
+from .tracing import tracing_diagnostics, tracing_enabled
 
 configure_logging()
 log = get_logger()
@@ -36,13 +38,13 @@ async def startup() -> None:
         "app_started",
         service=os.getenv("APP_NAME", "day13-observability-lab"),
         env=os.getenv("APP_ENV", "dev"),
-        payload={"tracing_enabled": tracing_enabled()},
+        payload={"tracing": tracing_diagnostics()},
     )
 
 
 @app.get("/health")
 async def health() -> dict:
-    return {"ok": True, "tracing_enabled": tracing_enabled(), "incidents": status()}
+    return {"ok": True, "tracing": tracing_diagnostics(), "incidents": status()}
 
 
 @app.get("/metrics")
